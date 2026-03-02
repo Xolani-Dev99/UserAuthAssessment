@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: userauth-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: yourpassword
+      POSTGRES_DB: userauthdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - userauth-network
+
+  backend:
+    build:
+      context: ./UserAuthApi
+      dockerfile: Dockerfile
+    container_name: userauth-backend
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=userauthdb;Username=postgres;Password=yourpassword
+      Jwt__Key: SUPER_SECRET_KEY_123456789_ABC_12345678
+      Jwt__Issuer: UserAuthApi
+      Jwt__Audience: UserAuthApiUsers
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+    networks:
+      - userauth-network
+
+volumes:
+  pgdata:
+
+networks:
+  userauth-network:
+    driver: bridge
